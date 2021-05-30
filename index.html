@@ -1,0 +1,151 @@
+<html>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-dom.js"></script>
+<script type="text/babel">
+
+class Sticker {
+    constructor(a) {
+        this.productTitle = a[0]
+        this.productImg = a[1]
+        this.txt = a[2]
+        this.img = a[3]
+    }
+}
+function lcs(a, b) {
+    const na = a.length
+    const nb = b.length
+    var mtx = Array(na + 1).fill(null).map(() => Array(nb + 1));
+    for (var i = 0; i <= na; i++) mtx[i][0] = 0;
+    for (var j = 0; j <= nb; j++) mtx[0][j] = 0;
+    for (var i = 1; i <= na; i++) for (var j = 1; j <= nb; j++) {
+        if (a[i-1] == b[j-1]) {
+            mtx[i][j] = mtx[i-1][j-1] + 1;
+        } else {
+            mtx[i][j] = Math.max(mtx[i-1][j], mtx[i][j-1])
+        }
+    }
+    //console.log('lcs(' + a + ', ' + b + ') = ' + mtx[na][nb])
+    return mtx[na][nb]
+}
+
+const stickers = []
+const stickerCollection = {
+    title: "白爛貓10☆超級煩☆",
+    img: "https://stickershop.line-scdn.net/stickershop/v1/product/1815191/LINEStorePC/main.png",
+    content: [
+        ['再這樣我就報警', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372005/android/sticker.png'],
+        ['讓我靜靜', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372008/android/sticker.png'],
+        ['你怎麼好意思說我', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372014/android/sticker.png'],
+        ['對不起我只會吃', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372024/android/sticker.png'],
+    ],
+}
+
+function parseStickerCollection(col) {
+    col.content.map(([txt, img]) => stickers.push(new Sticker([col.title, col.img, txt, img])))
+}
+parseStickerCollection(stickerCollection)
+
+console.log(stickers)
+
+class SearchResult extends React.Component {
+    constructor(props) { super(props) }
+    render() {
+        const style = {
+            borderWidth: "3px",
+            borderStyle: "outset",
+            borderColor: "#4404b3",
+            padding: "5px",
+            display: "inline-block",
+        }
+        //const style = "border-width:3px;border-style:outset;border-color:#4404b3;padding:5px;";
+        return <div style={style}>
+            <h4>{this.props.sticker.txt}</h4><br />
+            <p>Similarity = {this.props.similarity.toFixed(3)}</p><br />
+            <img src={this.props.sticker.productImg} height={"40px"} width={"auto"} />
+                "{this.props.sticker.productTitle}"
+            <br />
+            <img src={this.props.sticker.img} />
+        </div>
+    }
+}
+
+class SearchResultPage extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {keyText: this.props.keyText}
+    }
+    search(keyText) {
+        // Using LCS
+        const results = stickers.map(sticker =>
+            [sticker, lcs(keyText, sticker.txt)/(sticker.txt.length+1)]
+        ).filter(tpl => tpl[1] > 0).sort((tplA, tplB) =>
+            - (tplA[1] - tplB[1]) // Reverse
+        )
+        return results
+    }
+    render() {
+        const listKeys = this.props.keyText.split(" ");
+        const searchResults = this.search(this.props.keyText).map(a =>
+            <SearchResult sticker={a[0]} similarity={a[1]} />
+        );
+        const displayText = "總共有" + searchResults.length + "筆結果。"
+        return <div><p>{displayText}</p>{searchResults}</div>
+    }
+}
+
+class SearchBar extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {txt: ""};
+        this.onKeyChange = props.onKeyChange;
+    }
+    onChange(event) {
+        this.onKeyChange(event.target.value);
+    }
+    render() {
+        return (
+            <form action="/" method="get">
+                <label htmlFor="header-search">
+                    <span className="visually-hidden">Search blog posts</span>
+                </label>
+                <input
+                    type="text"
+                    id="header-search"
+                    placeholder="Search your LanLanCat stickers here"
+                    name="s"
+                    onChange={this.onChange.bind(this)}
+                />
+                <button type="submit">Search</button>
+            </form>
+        );
+    }
+}
+
+class Root extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {keyText: ""}
+    }
+    onKeyChange(keyText) {
+        this.setState({keyText: keyText})
+    }
+    render() {
+        return <div>
+            <p>Type anything, like "我" to begin</p><br />
+            <SearchBar onKeyChange={this.onKeyChange.bind(this)} />
+            <SearchResultPage keyText={this.state.keyText} />
+        </div>;
+    }
+}
+
+ReactDOM.render(
+    <Root />,
+    document.getElementById("root")
+);
+</script>
+
+<div id="root"></div>
+
+</html>
+
