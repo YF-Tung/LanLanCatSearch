@@ -1,17 +1,43 @@
+<!doctype html>
 <html>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-dom.js"></script>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+
+    <!-- React -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-dom.js"></script>
+</head>
 <script type="text/babel">
+
+/** Utility functions
+ */
 
 class Sticker {
     constructor(a) {
         this.productTitle = a[0]
-        this.productImg = a[1]
-        this.txt = a[2]
-        this.img = a[3]
+        this.productId = a[1]
+        this.imgId = a[2]
+        this.txt = a[3]
+        this.isAnimated = a[4]
+    }
+    getStickerImg() {
+        return (this.isAnimated ?
+            'https://stickershop.line-scdn.net/stickershop/v1/sticker/' + this.imgId + '/iPhone/sticker_animation.png;compress=true?'+Date.now() :
+            'https://stickershop.line-scdn.net/stickershop/v1/sticker/' + this.imgId + '/iPhone/sticker.png;compress=true'
+        )
+    }
+    getProductImg(productId) {
+        return "https://stickershop.line-scdn.net/stickershop/v1/product/" + this.productId + "/LINEStorePC/main.png"
     }
 }
+
 function lcs(a, b) {
     const na = a.length
     const nb = b.length
@@ -25,48 +51,69 @@ function lcs(a, b) {
             mtx[i][j] = Math.max(mtx[i-1][j], mtx[i][j-1])
         }
     }
-    //console.log('lcs(' + a + ', ' + b + ') = ' + mtx[na][nb])
     return mtx[na][nb]
 }
 
 const stickers = []
-const stickerCollection = {
-    title: "白爛貓10☆超級煩☆",
-    img: "https://stickershop.line-scdn.net/stickershop/v1/product/1815191/LINEStorePC/main.png",
+const col_10 = {
+    productTitle: "白爛貓10☆超級煩☆",
+    productId: 1815191,
+    isAnimated: false,
     content: [
-        ['再這樣我就報警', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372005/android/sticker.png'],
-        ['讓我靜靜', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372008/android/sticker.png'],
-        ['你怎麼好意思說我', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372014/android/sticker.png'],
-        ['對不起我只會吃', 'https://stickershop.line-scdn.net/stickershop/v1/sticker/16372024/android/sticker.png'],
+        [16372005, '再這樣我就報警'],
+        [16372008, '讓我靜靜'],
+        [16372014, '你怎麼好意思說我'],
+        [16372024, '對不起我只會吃'],
+    ],
+}
+const col_mm = {
+    productTitle: "白爛貓☆麥衝動☆",
+    productId: 20166,
+    isAnimated: true,
+    content: [
+        [386621566, '我錯過什麼了嗎？'],
+        [386621578, '沒人教你？尊重'],
     ],
 }
 
 function parseStickerCollection(col) {
-    col.content.map(([txt, img]) => stickers.push(new Sticker([col.title, col.img, txt, img])))
+    col.content.map(([imgId, txt]) => stickers.push(new Sticker([col.productTitle, col.productId, imgId, txt, col.isAnimated])))
 }
-parseStickerCollection(stickerCollection)
+parseStickerCollection(col_10)
+parseStickerCollection(col_mm)
 
 console.log(stickers)
 
 class SearchResult extends React.Component {
     constructor(props) { super(props) }
+    onClickImage(event) {
+        let elm = document.getElementById(this.getId())
+        elm.src = elm.src.replace(/(\?\d+)?$/, '?'+Date.now());
+    }
+    onChange(event) {
+        this.onKeyChange(event.target.value);
+    }
+    getId() {
+        return "img" + this.props.sticker.imgId
+    }
     render() {
-        const style = {
-            borderWidth: "3px",
-            borderStyle: "outset",
-            borderColor: "#4404b3",
-            padding: "5px",
-            display: "inline-block",
+        const contentImgStyle = {
+            height: "auto",
+            maxWidth: "80%",
+            cursor: "pointer",
         }
-        //const style = "border-width:3px;border-style:outset;border-color:#4404b3;padding:5px;";
-        return <div style={style}>
-            <h4>{this.props.sticker.txt}</h4><br />
-            <p>Similarity = {this.props.similarity.toFixed(3)}</p><br />
-            <img src={this.props.sticker.productImg} height={"40px"} width={"auto"} />
-                "{this.props.sticker.productTitle}"
-            <br />
-            <img src={this.props.sticker.img} />
-        </div>
+        return <div className={"col"}><div className={"card shadow"}>
+                <img className={"img-fluid mx-auto card-img-top"}
+                    src={this.props.sticker.getStickerImg()}
+                    style={contentImgStyle}
+                    id = {this.getId()}
+                    onClick={this.props.sticker.isAnimated ? this.onClickImage.bind(this) : ""} />
+                <div className={"card-body"}>
+                    <p class={"card-text"}>DEBUG: Similarity = {this.props.similarity.toFixed(3)}<br/>
+                        出處：{this.props.sticker.productTitle}
+                    </p>
+                </div>
+        </div></div>
     }
 }
 
@@ -77,9 +124,10 @@ class SearchResultPage extends React.Component {
     }
     search(keyText) {
         // Using LCS
+        const flt = function(tpl) { return tpl[1] > 0 }
         const results = stickers.map(sticker =>
             [sticker, lcs(keyText, sticker.txt)/(sticker.txt.length+1)]
-        ).filter(tpl => tpl[1] > 0).sort((tplA, tplB) =>
+        ).filter(flt).sort((tplA, tplB) =>
             - (tplA[1] - tplB[1]) // Reverse
         )
         return results
@@ -90,7 +138,9 @@ class SearchResultPage extends React.Component {
             <SearchResult sticker={a[0]} similarity={a[1]} />
         );
         const displayText = "總共有" + searchResults.length + "筆結果。"
-        return <div><p>{displayText}</p>{searchResults}</div>
+        return <div><p>{displayText}</p>
+            <div className={"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"}>{searchResults}</div>
+        </div>
     }
 }
 
@@ -105,19 +155,21 @@ class SearchBar extends React.Component {
     }
     render() {
         return (
-            <form action="/" method="get">
+                <div className="form-group">
                 <label htmlFor="header-search">
                     <span className="visually-hidden">Search blog posts</span>
                 </label>
+                <h3>請輸入搜尋字串：</h3>
+                <h5>例如：請輸入「我」、「你」</h5>
                 <input
+                    className="form-control"
                     type="text"
                     id="header-search"
                     placeholder="Search your LanLanCat stickers here"
                     name="s"
                     onChange={this.onChange.bind(this)}
                 />
-                <button type="submit">Search</button>
-            </form>
+                </div>
         );
     }
 }
@@ -131,8 +183,7 @@ class Root extends React.Component {
         this.setState({keyText: keyText})
     }
     render() {
-        return <div>
-            <p>Type anything, like "我" to begin</p><br />
+        return <div className="container">
             <SearchBar onKeyChange={this.onKeyChange.bind(this)} />
             <SearchResultPage keyText={this.state.keyText} />
         </div>;
@@ -145,7 +196,8 @@ ReactDOM.render(
 );
 </script>
 
-<div id="root"></div>
-
+<body>
+<div id="root" class="container"></div>
+</body>
 </html>
 
