@@ -42,34 +42,19 @@ function lcs(a, b) {
 }
 
 const stickers = []
-const col_10 = {
-    productTitle: "白爛貓10☆超級煩☆",
-    productId: 1815191,
-    isAnimated: false,
-    content: [
-        [16372005, '再這樣我就報警'],
-        [16372008, '讓我靜靜'],
-        [16372014, '你怎麼好意思說我'],
-        [16372024, '對不起我只會吃'],
-    ],
-}
-const col_mm = {
-    productTitle: "白爛貓☆麥衝動☆",
-    productId: 20166,
-    isAnimated: true,
-    content: [
-        [386621566, '我錯過什麼了嗎？'],
-        [386621578, '沒人教你？尊重'],
-    ],
-}
-
 function parseStickerCollection(col) {
     col.content.map(([imgId, txt]) => stickers.push(new Sticker([col.productTitle, col.productId, imgId, txt, col.isAnimated])))
 }
-parseStickerCollection(col_10)
-parseStickerCollection(col_mm)
 
-console.log(stickers)
+function parseStickerCollections(collections) {
+    collections.forEach(function(col) {
+        col.content.map(([imgId, txt]) => stickers.push(
+            new Sticker([col.productTitle, col.productId, imgId, txt, col.isAnimated])))
+    })
+    console.log(collections.length + ' products loaded')
+}
+
+fetch('data.json').then(response => response.json()).then(parseStickerCollections)
 
 class SearchResult extends React.Component {
     constructor(props) { super(props) }
