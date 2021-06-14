@@ -6,8 +6,13 @@ class Sticker {
         this.txt = a[3]
         this.isAnimated = a[4]
     }
+    getStaticStickerImg() {
+            return 'https://stickershop.line-scdn.net/stickershop/v1/sticker/' + this.imgId + '/iPhone/sticker.png;compress=true'
+    }
     getStickerImg() {
-        return (this.isAnimated ?
+        // Return animated if possible
+        return (
+            this.isAnimated ?
             'https://stickershop.line-scdn.net/stickershop/v1/sticker/' + this.imgId + '/iPhone/sticker_animation.png;compress=true?'+Date.now() :
             'https://stickershop.line-scdn.net/stickershop/v1/sticker/' + this.imgId + '/iPhone/sticker.png;compress=true'
         )
@@ -68,9 +73,12 @@ console.log(stickers)
 
 class SearchResult extends React.Component {
     constructor(props) { super(props) }
+    getRefreshImgSrc(src) {
+        return src.replace(/(\?\d+)?$/, '?'+Date.now());
+    }
     onClickImage(event) {
         let elm = document.getElementById(this.getId())
-        elm.src = elm.src.replace(/(\?\d+)?$/, '?'+Date.now());
+        elm.src = this.props.sticker.getStickerImg()
     }
     onChange(event) {
         this.onKeyChange(event.target.value);
@@ -79,20 +87,26 @@ class SearchResult extends React.Component {
         return "img" + this.props.sticker.imgId
     }
     render() {
-        const contentImgStyle = {
-            height: "auto",
-            maxWidth: "80%",
-            cursor: "pointer",
+        const isAnimated = this.props.sticker.isAnimated
+        const style = {
+            cursor: isAnimated ? "pointer" : "auto",
         }
+                //<img className={"img-fluid mx-auto card-img-top ItemImage"}
+        const overlay = isAnimated ?  <p className={"OverlayIcon"}
+                    onClick={isAnimated ? this.onClickImage.bind(this) : ""}> ▶️ </p> : <p />
         return <div className={"col"}><div className={"card shadow"}>
-                <img className={"img-fluid mx-auto card-img-top"}
-                    src={this.props.sticker.getStickerImg()}
-                    style={contentImgStyle}
+                <img className={"ItemImage img-fluid mx-auto card-img-to"}
+                    src={this.props.sticker.getStaticStickerImg()}
+                    alt={""}
+                    style={style}
                     id = {this.getId()}
-                    onClick={this.props.sticker.isAnimated ? this.onClickImage.bind(this) : ""} />
+                    onClick={isAnimated ? this.onClickImage.bind(this) : ""}></img>
+                    {overlay}
                 <div className={"card-body"}>
                     <p class={"card-text"}>DEBUG: Similarity = {this.props.similarity.toFixed(3)}<br/>
-                        出處：{this.props.sticker.productTitle}
+                        出處：
+                        <img src={this.props.sticker.getTabImg()} />
+                        {this.props.sticker.productTitle}
                     </p>
                 </div>
         </div></div>
